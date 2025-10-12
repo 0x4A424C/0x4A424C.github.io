@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background-color: #333333;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="myCanvas"></canvas>
+
+    <script>
+        function ezDate(year, month, day) {
+            return new Date(year, month - 1, day);
+        }
+
+        const startYear = 1939;
+        const endYear = 1970;
+
+        const worldEvents = [
+            { date: ezDate(1939, 9, 1), name: 'Germany invades Poland', detail: '' },
+            { date: ezDate(1941, 12, 7), name: 'Pearl Harbor', detail: '' },
+            { date: ezDate(1944, 6, 6), name: 'D-Day', detail: '' },
+            { date: ezDate(1945, 5, 8), name: 'Germany surrenders', detail: '' },
+            { date: ezDate(1945, 8, 15), name: 'Japan surrenders', detail: '' },
+            { date: ezDate(1950, 6, 25), name: 'Korean War Begins', detail: '' },
+            { date: ezDate(1953, 7, 27), name: 'Korean War Ends', detail: '' },
+            { date: ezDate(1955, 11, 1), name: 'Vietnam War Begins', detail: '' },
+            { date: ezDate(1964, 8, 2), name: 'Gulf of Tonkin incident', detail: '' },
+            { date: ezDate(1975, 4, 30), name: 'Vietnam War Ends', detail: '' },
+        ];
+
+        const wars = [
+            { startDate: ezDate(1939, 9, 1), endDate: ezDate(1945, 8, 15), name: 'WWII' },
+            { startDate: ezDate(1950, 6, 25), endDate: ezDate(1953, 7, 27), name: 'Korean War' },
+            { startDate: ezDate(1955, 11, 1), endDate: ezDate(1975, 4, 30), name: 'Vietnam War' }
+        ];
+
+        const locations = [
+
+        ];
+
+        const ranks = [
+            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Private', abbv: 'Pvt.', insignia: '', corps: '', corpsInsignia: '' },
+        ];
+
+        const units = [
+
+        ];
+
+        const awards = [
+
+        ];
+
+        const events = [
+            { date: ezDate(1941, 4, 5), name: 'Inducted at Ft. Barrancas', detail: '' },
+            { date: ezDate(1941, 7, 16), name: 'Promoted to Private 1st Class', detail: '' },
+            { date: ezDate(1941, 10, 27), name: 'Promoted to Sergeant', detail: '' },
+            { date: ezDate(1942, 1, 3), name: 'Promoted to Staff Sergeant', detail: '' },
+            { date: ezDate(1942, 4, 17), name: 'Promoted to Technician 3rd Grade', detail: '' },
+            { date: ezDate(1942, 5, 25), name: 'Started Quartermaster School', detail: '' },
+            { date: ezDate(1942, 8, 13), name: 'Graduated Quartermaster School', detail: '' },
+        ];
+
+        const canvas = document.getElementById('myCanvas');
+        canvas.width = 1000;
+        canvas.height = 10000;
+
+        const verticalBuffer = 50;
+        const timelineWidth = 2;
+        const timelineX = 350;
+        const yearStrokeWidth = 20;
+        const monthStrokeWidth = yearStrokeWidth / 2;
+
+        const timelineLength = canvas.height - 2 * verticalBuffer;
+
+        const startTime = ezDate(startYear, 1, 1).getTime();
+        const endTime = ezDate(endYear, 1, 1).getTime();
+        const timeSpan = endTime - startTime;
+        function dateToTimelineCoordinate(date) {
+            return timelineLength * ((date.getTime() - startTime) / timeSpan) + verticalBuffer;
+        }
+
+        const ctx = canvas.getContext('2d');
+
+        function drawTimeline() {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.font = '20px serif';
+            ctx.lineWidth = timelineWidth;
+
+            ctx.beginPath();
+            ctx.moveTo(timelineX, verticalBuffer)
+            ctx.lineTo(timelineX, canvas.height - verticalBuffer);
+            ctx.stroke();
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            for (let year = startYear; year <= endYear; year++) {
+                ctx.lineWidth = timelineWidth;
+                const y = dateToTimelineCoordinate(ezDate(year, 1, 1));
+                ctx.beginPath();
+                ctx.moveTo(timelineX - yearStrokeWidth, y);
+                ctx.lineTo(timelineX + yearStrokeWidth, y);
+                ctx.stroke();
+
+                ctx.fillText(year.toString(10), timelineX - yearStrokeWidth - 5, y);
+
+                if (year == endYear) break;
+
+                ctx.lineWidth = timelineWidth / 2;
+                for (let month = 2; month <= 12; month++) {
+                    const y = dateToTimelineCoordinate(ezDate(year, month, 1));
+                    ctx.beginPath();
+                    ctx.moveTo(timelineX - monthStrokeWidth, y);
+                    ctx.lineTo(timelineX + monthStrokeWidth, y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawEvent(xOffset, leftOfTimeline, date, name, detail) {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.font = '20px serif';
+            ctx.textAlign = leftOfTimeline ? 'right' : 'left';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = timelineWidth / 2;
+
+            const textOffset = leftOfTimeline ? -5 : 5;
+            const x = leftOfTimeline ? timelineX - xOffset : timelineX + xOffset;
+            const y = dateToTimelineCoordinate(date);
+
+            ctx.fillText(name, x + textOffset, y);
+
+            ctx.beginPath();
+            ctx.moveTo(timelineX, y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(timelineX, y, 5, 5, 0, 0, 2 * Math.PI);
+            ctx.fill()
+            ctx.stroke();
+        }
+
+        function drawWorldEvents() {
+            for (let i = 0; i < worldEvents.length; i++) {
+                const event = worldEvents[i];
+                drawEvent(timelineX * 0.33, true, event.date, event.name, event.detail)
+            }
+        }
+
+        function drawEvents() {
+            for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                drawEvent(timelineX, false, event.date, event.name, event.detail)
+            }
+        }
+
+        function drawWars() {
+            ctx.lineWidth = timelineWidth;
+            ctx.strokeStyle = 'red';
+            for (let i = 0; i < wars.length; i++) {
+                const war = wars[i];
+                ctx.beginPath();
+                ctx.moveTo(timelineX, dateToTimelineCoordinate(war.startDate));
+                ctx.lineTo(timelineX, dateToTimelineCoordinate(war.endDate));
+                ctx.stroke();
+            }
+        }
+
+        drawTimeline();
+        drawWars();
+        drawWorldEvents();
+        drawEvents();
+
+
+    </script>
+
+</body>
+
+</html>
