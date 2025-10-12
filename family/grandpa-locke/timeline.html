@@ -7,14 +7,21 @@
     <title>Timeline</title>
     <style>
         :root {
-            --primary-color: #ffffff;
+            --timeline-color: #ffffff;
+            --event-marker-color: #e4f2efc1;
             --background-color: #333333;
             --text-color: #ffffff;
-            --timeline-line-width: 2px;
+            --timeline-line-width: 1px;
             --major-tick-width: 20px;
             --major-tick-thickness: 1px;
-            --minor-tick-width: 7px;
+            --minor-tick-width: 10px;
             --minor-tick-thickness: 1px;
+            --event-marker-diameter: 5px;
+            --timeline-event-line-thickness: 1px;
+            --situation-box-width: 5px;
+            --text-color: #ffffff;
+            --text-size: 12px;
+            --text-buffer: 5px;
         }
 
         html {
@@ -24,36 +31,51 @@
             padding: 0;
             background-color: #333333;
             font-family: 'Inter', sans-serif;
+            font-size: var(--text-size);
+            color: var(--text-color);
         }
 
         body {
             width: 100%;
             height: 100%;
-            margin: 10px;
-            padding: 0;
         }
 
-        .timeline-container {
-            position: absolute;
-            left: 25%;
-            width: var(--major-tick-width);
+        .content {
+            display: flex;
+            width: fit-content;
             height: 5000px;
+            position: absolute;
         }
 
-        .timeline-line {
-            position: absolute;
-            transform: translateX(-50%);
-            left: 50%;
+        .left-events {
+            width: 200px;
+            background-color: #ff8c00;
+        }
+
+        .left-lines {
+            width: 100px;
+            background-color: #8400ff;
+        }
+
+        .timeline {
             width: var(--timeline-line-width);
-            height: 100%;
-            background-color: var(--primary-color);
+            background-color: var(--timeline-color);
+        }
+
+        .right-lines {
+            width: 200px;
+            background-color: #4e4d27;
+        }
+
+        .right-events {
+            width: 200px;
+            background-color: #545265;
         }
 
         .timeline-tick {
             position: absolute;
-            left: 50%;
             transform: translateX(-50%) translateY(-50%);
-            background-color: var(--primary-color);
+            background-color: var(--timeline-color);
         }
 
         .timeline-tick-major {
@@ -65,13 +87,98 @@
             width: var(--minor-tick-width);
             height: var(--minor-tick-thickness);
         }
+
+        .timeline-label {
+            position: absolute;
+            transform: translateX(-100%) translateX(calc(-1*var(--major-tick-width)/2)) translateY(-50%);
+            text-align: right;
+            padding: var(--text-buffer);
+            white-space: nowrap;
+        }
+
+        .timeline-event-marker {
+            position: absolute;
+            transform: translateX(-50%) translateY(-50%);
+            width: var(--event-marker-diameter);
+            height: var(--event-marker-diameter);
+            background-color: var(--event-marker-color);
+            border-radius: 50%;
+        }
+
+        .timeline-event-line {
+            position: absolute;
+            transform: translateY(-50%);
+            height: var(--timeline-event-line-thickness);
+            background-color: var(--event-marker-color);
+        }
+
+        .event-line {
+            position: absolute;
+            width: 100%;
+            height: var(--timeline-event-line-thickness);
+            background-color: var(--event-marker-color);
+        }
+
+        .situation-box {
+            position: absolute;
+            transform: translateX(-50%);
+            width: var(--situation-box-width);
+            border-radius: var(--situation-box-width);
+        }
+
+        .timeline-event-label {
+            position: absolute;
+            transform: translateY(-50%);
+            padding: var(--text-buffer);
+            white-space: nowrap;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            /* Adjust as needed */
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            /* Ensure it appears above other elements */
+            bottom: 125%;
+            /* Position above the text */
+            left: 50%;
+            margin-left: -60px;
+            /* Center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .glow:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7)
+        }
     </style>
 </head>
 
 <body>
 
-    <div id="timeline" class="timeline-container">
-        <div class="timeline-line" />
+    <div id="content" class="content">
+        <div id="left-events" class="left-events"></div>
+        <div id="left-lines" class="left-lines"></div>
+        <div id="timeline" class="timeline"></div>
+        <div id="right-lines" class="right-lines"></div>
+        <div id="right-events" class="right-events"></div>
     </div>
 
     <script>
@@ -130,19 +237,32 @@
         const startTime = ezDate(startYear, 1, 1).getTime();
         const endTime = ezDate(endYear, 1, 1).getTime();
         const timeSpan = endTime - startTime;
+
         function dateToTimelineCoordinate(date) {
             return (100 * (date.getTime() - startTime) / timeSpan).toFixed(2) + '%';
         }
 
-        function drawTimeline() {
-            const container = document.querySelector('.timeline-container');
+        function durationToTimelineSpan(start, end) {
+            const percent = (100 * (end.getTime() - start.getTime()) / timeSpan).toFixed(2);
+            return percent > 100 ? '100%' : percent + '%';
+        }
 
+        function drawTimeline() {
+            const timeline = document.querySelector('#timeline');
             for (let year = startYear; year <= endYear; year++) {
+                const y = dateToTimelineCoordinate(ezDate(year, 1, 1));
+
                 const tick = document.createElement('div');
                 tick.classList.add('timeline-tick');
                 tick.classList.add('timeline-tick-major');
-                tick.style.top = dateToTimelineCoordinate(ezDate(year, 1, 1));
-                container.appendChild(tick);
+                tick.style.top = y;
+                timeline.appendChild(tick);
+
+                const yearLabel = document.createElement('label');
+                yearLabel.classList.add('timeline-label');
+                yearLabel.textContent = year.toString(10);
+                yearLabel.style.top = y;
+                timeline.appendChild(yearLabel);
 
                 if (year == endYear) break;
 
@@ -151,16 +271,84 @@
                     tick.classList.add('timeline-tick');
                     tick.classList.add('timeline-tick-minor');
                     tick.style.top = dateToTimelineCoordinate(ezDate(year, month, 1));
-                    container.appendChild(tick);
+                    timeline.appendChild(tick);
                 }
             }
+        }
+
+        function drawTimelineEvent(date, displayLeft, length, name) {
+            const timeline = document.querySelector('#timeline');
+            const y = dateToTimelineCoordinate(date);
+
+            const dot = document.createElement('div');
+            dot.classList.add('timeline-event-marker');
+            dot.style.top = y;
+            timeline.appendChild(dot);
+
+            const lineContainer = document.querySelector(displayLeft ? '#left-lines' : '#right-lines');
+            const line = document.createElement('div');
+            line.classList.add('event-line');
+            line.style.top = y;
+            lineContainer.appendChild(line);
+
+            const labelContainer = document.querySelector(displayLeft ? '#left-events' : '#right-events');
+            const label = document.createElement('label');
+            label.classList.add('timeline-event-label');
+            label.classList.add('glow');
+            label.textContent = name;
+            label.style.top = y;
+            if (displayLeft) {
+                label.style.right = length;
+                label.style.textAlign = 'right';
+            } else {
+                label.style.left = length;
+                label.style.textAlign = 'left';
+            }
+            labelContainer.appendChild(label);
+        }
+
+        function drawSituationBox(startDate, endDate, name, color, offset) {
+            const container = document.querySelector('.timeline-container');
+
+            const tooltip = document.createElement('span');
+            tooltip.classList.add('tooltiptext');
+            tooltip.textContent = name;
+            container.appendChild(tooltip);
+
+            const box = document.createElement('div');
+            box.classList.add('situation-box');
+            box.classList.add('tooltip');
+            box.classList.add('glow');
+            box.style.top = dateToTimelineCoordinate(startDate);
+            box.style.height = durationToTimelineSpan(startDate, endDate);
+            box.style.backgroundColor = color;
+            box.style.left = offset;
+            container.appendChild(box);
+        }
+
+        function drawWorldEvents() {
+            worldEvents.forEach(event => {
+                drawTimelineEvent(event.date, true, '75px', event.name);
+            });
+        }
+
+        function drawEvents() {
+            events.forEach(event => {
+                drawTimelineEvent(event.date, false, '200px', event.name);
+            });
+        }
+
+        function drawWars() {
+            wars.forEach(war => {
+                drawSituationBox(war.startDate, war.endDate, war.name, '#ff000088', '50%');
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             drawTimeline();
             // drawWars();
-            // drawWorldEvents();
-            // drawEvents();
+            drawWorldEvents();
+            drawEvents();
         });
     </script>
 
