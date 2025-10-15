@@ -12,9 +12,9 @@
             --background-color: #333333;
             --text-color: #ffffff;
             --timeline-line-width: 1px;
-            --major-tick-width: 20px;
+            --major-tick-width: 15px;
             --major-tick-thickness: 1px;
-            --minor-tick-width: 10px;
+            --minor-tick-width: 5px;
             --minor-tick-thickness: 1px;
             --event-marker-diameter: 5px;
             --timeline-event-line-thickness: 1px;
@@ -47,29 +47,39 @@
             position: absolute;
         }
 
+        .content-column {
+            display: flex;
+            position: relative;
+        }
+
         .left-events {
-            width: 200px;
+            width: 150px;
             background-color: #ff8c00;
+            z-index: 250
         }
 
         .left-lines {
             width: 100px;
             background-color: #8400ff;
+            z-index: 500
         }
 
         .timeline {
             width: var(--timeline-line-width);
             background-color: var(--timeline-color);
+            z-index: 1000
         }
 
         .right-lines {
             width: 200px;
             background-color: #4e4d27;
+            z-index: 500
         }
 
         .right-events {
             width: 200px;
             background-color: #545265;
+            z-index: 250
         }
 
         .timeline-tick {
@@ -96,7 +106,7 @@
             white-space: nowrap;
         }
 
-        .timeline-event-marker {
+        .event-marker {
             position: absolute;
             transform: translateX(-50%) translateY(-50%);
             width: var(--event-marker-diameter);
@@ -105,18 +115,22 @@
             border-radius: 50%;
         }
 
-        .timeline-event-line {
+        .event-line {
             position: absolute;
             transform: translateY(-50%);
+            width: 100%;
             height: var(--timeline-event-line-thickness);
             background-color: var(--event-marker-color);
         }
 
-        .event-line {
+        .text-container {
             position: absolute;
+            transform: translateY(-50%);
             width: 100%;
-            height: var(--timeline-event-line-thickness);
-            background-color: var(--event-marker-color);
+            height: fit-content;
+            padding: var(--text-buffer);
+            white-space: nowrap;
+            box-sizing: border-box;
         }
 
         .situation-box {
@@ -124,13 +138,6 @@
             transform: translateX(-50%);
             width: var(--situation-box-width);
             border-radius: var(--situation-box-width);
-        }
-
-        .timeline-event-label {
-            position: absolute;
-            transform: translateY(-50%);
-            padding: var(--text-buffer);
-            white-space: nowrap;
         }
 
         .tooltip {
@@ -165,7 +172,7 @@
             opacity: 1;
         }
 
-        .glow:hover {
+        .glow {
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.7)
         }
     </style>
@@ -174,14 +181,19 @@
 <body>
 
     <div id="content" class="content">
-        <div id="left-events" class="left-events"></div>
-        <div id="left-lines" class="left-lines"></div>
-        <div id="timeline" class="timeline"></div>
-        <div id="right-lines" class="right-lines"></div>
-        <div id="right-events" class="right-events"></div>
+        <div id="left-events" class="content-column left-events"></div>
+        <div id="left-lines" class="content-column left-lines"></div>
+        <div id="timeline" class="content-column timeline"></div>
+        <div id="right-lines" class="content-column right-lines"></div>
+        <div id="right-events" class="content-column right-events"></div>
     </div>
 
     <script>
+        var uidCounter = 0;
+        function newSequentialUid() {
+            return `id${uidCounter++}`;
+        }
+
         function ezDate(year, month, day) {
             return new Date(year, month - 1, day);
         }
@@ -276,35 +288,67 @@
             }
         }
 
-        function drawTimelineEvent(date, displayLeft, length, name) {
+        function setupGroupHover(groupSelector) {
+            const triggers = document.querySelectorAll(groupSelector);
+
+            if (!triggers || triggers.length < 1) {
+                return;
+            }
+
+            const applyStyle = (target) => {
+                target.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.7)';
+                triggers.forEach(trigger => {
+                    if (target === trigger) return;
+                    target.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.7)';
+                });
+            };
+
+            const removeStyle = (target) => {
+                target.style.boxShadow = '';
+                triggers.forEach(trigger => {
+                    if (target === trigger) return;
+                    trigger.style.boxShadow = '';
+                });
+            };
+
+            triggers.forEach(trigger => {
+                trigger.addEventListener('mouseover', () => applyStyle(trigger));
+                trigger.addEventListener('mouseout', () => removeStyle(trigger));
+            });
+        }
+
+        function drawTimelineEvent(date, displayLeft, name) {
+            const elementID = newSequentialUid();
             const timeline = document.querySelector('#timeline');
             const y = dateToTimelineCoordinate(date);
 
             const dot = document.createElement('div');
-            dot.classList.add('timeline-event-marker');
+            dot.classList.add(elementID);
+            dot.classList.add('event-marker');
             dot.style.top = y;
             timeline.appendChild(dot);
 
             const lineContainer = document.querySelector(displayLeft ? '#left-lines' : '#right-lines');
             const line = document.createElement('div');
+            line.classList.add(elementID);
             line.classList.add('event-line');
             line.style.top = y;
             lineContainer.appendChild(line);
 
             const labelContainer = document.querySelector(displayLeft ? '#left-events' : '#right-events');
-            const label = document.createElement('label');
-            label.classList.add('timeline-event-label');
-            label.classList.add('glow');
-            label.textContent = name;
-            label.style.top = y;
+            const labelText = document.createElement("label");
+            labelText.classList.add(elementID);
+            labelText.classList.add('text-container');
+            labelText.textContent = name;
+            labelText.style.top = y;
             if (displayLeft) {
-                label.style.right = length;
-                label.style.textAlign = 'right';
+                labelText.style.textAlign = 'right';
             } else {
-                label.style.left = length;
-                label.style.textAlign = 'left';
+                labelText.style.textAlign = 'left';
             }
-            labelContainer.appendChild(label);
+            labelContainer.appendChild(labelText);
+
+            setupGroupHover(`.${elementID}`);
         }
 
         function drawSituationBox(startDate, endDate, name, color, offset) {
@@ -328,13 +372,13 @@
 
         function drawWorldEvents() {
             worldEvents.forEach(event => {
-                drawTimelineEvent(event.date, true, '75px', event.name);
+                drawTimelineEvent(event.date, true, event.name);
             });
         }
 
         function drawEvents() {
             events.forEach(event => {
-                drawTimelineEvent(event.date, false, '200px', event.name);
+                drawTimelineEvent(event.date, false, event.name);
             });
         }
 
