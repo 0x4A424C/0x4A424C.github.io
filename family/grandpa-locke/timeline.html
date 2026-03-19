@@ -241,25 +241,27 @@
         ];
 
         const locations = [
+            { startDate: ezDate(1944, 2, 21), endDate: ezDate(1945, 9, 20), name: 'ETO' },
             { startDate: ezDate(1959, 10, 9), endDate: ezDate(1960, 10, 11), name: 'Korea' },
             { startDate: ezDate(1964, 11, 16), endDate: ezDate(1967, 5, 18), name: 'Turkey' },
         ];
 
         const ranks = [
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Private', abbv: 'Pvt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Private First Class', abbv: 'Pfc.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Sergeant', abbv: 'Sgt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Staff Sergeant', abbv: 'S/Sgt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Technician Third Grade', abbv: 'T/3', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: '2nd Lieutenant', abbv: '2Lt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: '1st Lieutenant', abbv: '1Lt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Captain', abbv: 'Capt.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Major', abbv: 'Maj.', insignia: '', corps: '', corpsInsignia: '' },
-            { startDate: ezDate(1941, 4, 5), endDate: ezDate(), name: 'Lieutenant Colonel', abbv: 'LtC.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1941, 4, 5), endDate: ezDate(1941, 7, 15), name: 'Private', abbv: 'Pvt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1941, 7, 16), endDate: ezDate(1941, 8, 7), name: 'Private First Class', abbv: 'Pfc.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1941, 8, 8), endDate: ezDate(1941, 10, 26), name: 'Corporal?', abbv: 'Pfc.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1941, 10, 27), endDate: ezDate(1942, 1, 2), name: 'Sergeant', abbv: 'Sgt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1942, 1, 3), endDate: ezDate(1942, 4, 16), name: 'Staff Sergeant', abbv: 'S/Sgt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1942, 4, 17), endDate: ezDate(1942, 8, 13), name: 'Technician Third Grade', abbv: 'T/3', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1942, 8, 14), endDate: ezDate(1943, 3, 19), name: '2nd Lieutenant', abbv: '2Lt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1943, 3, 20), endDate: ezDate(1944, 2, 3), name: '1st Lieutenant', abbv: '1Lt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1944, 2, 4), endDate: ezDate(1952, 8, 19), name: 'Captain', abbv: 'Capt.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1952, 8, 20), endDate: ezDate(1960, 12, 12), name: 'Major', abbv: 'Maj.', insignia: '', corps: '', corpsInsignia: '' },
+            { startDate: ezDate(1960, 12, 13), endDate: ezDate(1967, 5, 31), name: 'Lieutenant Colonel', abbv: 'LtC.', insignia: '', corps: '', corpsInsignia: '' },
         ];
 
         const units = [
-
+            { startDate: ezDate(1964, 11, 16), endDate: ezDate(1967, 5, 18), name: 'Turkey' },
         ];
 
         const events = [
@@ -270,8 +272,9 @@
             { date: ezDate(1942, 4, 17), name: 'Promoted to Technician 3rd Grade', detail: '' },
             { date: ezDate(1942, 5, 25), name: 'Started Quartermaster School', detail: '' },
             { date: ezDate(1942, 8, 13), name: 'Graduated Quartermaster School', detail: '' },
-            { date: ezDate(1942, 8, 14), name: 'Promoted to 2nd Lieutenant', detail: '' },
+            //  { date: ezDate(1942, 8, 14), name: 'Promoted to 2nd Lieutenant', detail: '' },
             { date: ezDate(1943, 3, 20), name: 'Promoted to 1st Lieutenant', detail: '' },
+            { date: ezDate(1944, 2, 4), name: 'Promoted to Captain', detail: '' },
             { date: ezDate(1952, 8, 20), name: 'Promoted to Major', detail: '' },
             { date: ezDate(1954, 2, 28), name: 'Transferred from Quartermaster Corps to Transportation Corps', detail: '' },
             { date: ezDate(1960, 12, 13), name: 'Promoted to Lieutenant Colonel', detail: '' },
@@ -349,8 +352,9 @@
             labelContainer.appendChild(labelText);
         }
 
-        function drawSituationBox(startDate, endDate, name, color, offset) {
-            const container = document.querySelector('#left-lines');
+        function drawSituationBox(startDate, endDate, name, color, offset, right) {
+            const containerID = right ? '#right-lines' : '#left-lines';
+            const container = document.querySelector(containerID);
 
             const tooltip = document.createElement('span');
             tooltip.classList.add('tooltiptext');
@@ -363,7 +367,11 @@
             box.style.top = dateToTimelineCoordinate(startDate);
             box.style.height = durationToTimelineSpan(startDate, endDate);
             box.style.backgroundColor = color;
-            box.style.left = offset;
+            if (right) {
+                box.style.right = offset;
+            } else {
+                box.style.left = offset;
+            }
             container.appendChild(box);
         }
 
@@ -393,10 +401,24 @@
             });
         }
 
+        function drawRanks() {
+            ranks.forEach(rank => {
+                drawSituationBox(rank.startDate, rank.endDate, rank.name, '#ff000088', '5%', true);
+            });
+        }
+
+        function drawLocations() {
+            locations.forEach(location => {
+                drawSituationBox(location.startDate, location.endDate, location.name, '#ff000088', '10%', true);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             drawTimeline();
             drawWars();
             drawBattles();
+            drawRanks();
+            drawLocations();
             drawWorldEvents();
             drawEvents();
         });
